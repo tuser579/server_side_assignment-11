@@ -1,0 +1,53 @@
+[
+  {
+    "title": "Broken Street Light on Main Road",
+    "description": "Street light not working for 3 days near Central Park. Reported by multiple citizens.",
+    "category": "Electricity",
+    "status": "Pending",
+    "priority": "High",
+    "location": "Downtown, Sector 5",
+    "date": "",
+    "resolvedDate": "",
+    "upVotes": 0,
+    "reportedById": "",
+    "reportedByName": "",
+    "reportedByEmail": "",
+    "image": "https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+    "isUpvoted": false,
+    "isBoosted": false
+  },
+  {
+    "title": "Large Pothole on Highway Exit",
+    "description": "Dangerous pothole causing traffic issues and vehicle damage.",
+    "category": "Road Maintenance",
+    "status": "Pending",
+    "priority": "Normal",
+    "location": "North Highway, Exit 12",
+    "date": "2024-01-14",
+    "resolvedDate": "",
+    "upvotes": 0,
+    "reportedById": "",
+    "reportedByName": "",
+    "reportedByEmail": "",
+    "image": "https://images.unsplash.com/photo-1542223616-740d5dff7f56?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+    "isUpvoted": false,
+    "isBoosted": false
+  },
+  {
+    "title": "Water Pipe Leakage in Residential Area",
+    "description": "Water leakage from main pipe causing wastage and road damage.",
+    "category": "Water Supply",
+    "status": "Pending",
+    "priority": "High",
+    "location": "Green Valley Society",
+    "date": "",
+    "resolvedDate": "",
+    "upvotes": 0,
+    "reportedById": "",
+    "reportedByName": "",
+    "reportedByEmail": "",
+    "image": "https://images.unsplash.com/photo-1621452773781-0f992fd1f5c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+    "isUpvoted": false,
+    "isBoosted": false
+  }
+]

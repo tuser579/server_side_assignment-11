@@ -1,0 +1,13 @@
+[
+    {
+        "name": "",
+        "email": "",
+        "phoneNumber": "",
+        "address": "",
+        "memberSince": "",
+        "isPremium": false,
+        "isBlocked": false,
+        "role": "citizen",
+        "issueCount": 0
+    }
+]
