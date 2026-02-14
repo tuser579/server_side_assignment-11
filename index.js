@@ -12,10 +12,12 @@ const crypto = require("crypto");
 
 const admin = require("firebase-admin");
 
-const serviceAccount = require("./city-fix-assignment-11-firebase-adminsdk.json");
+// const serviceAccount = require("./city-fix-assignment-11-firebase-adminsdk.json");
+const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8');
+const serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
 
 function generateTrackingId() {
@@ -66,7 +68,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("assignment-11");
     const citizens = db.collection("citizenUsers");
@@ -108,6 +110,49 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/allUsers", async (req, res) => {
+      const cursor = citizens.find({ role: "citizen" }).sort({ createdAt: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get("/allUser", async (req, res) => {
+      const cursor = citizens.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get("/staffs", async (req, res) => {
+      try {
+        const cursor = citizens.find({ role: "staff" }).sort({ createdAt: -1 });
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        res
+          .status(500)
+          .send({ message: "Error fetching staffs", error: error.message });
+      }
+    });
+
+    app.patch("/staffs/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedIssue = req.body;
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: updatedIssue,
+      };
+      const options = {};
+      const result = await citizens.updateOne(query, update, options);
+      res.send(result);
+    });
+
+    app.delete("/staffs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await citizens.deleteOne(query);
+      res.send(result);
+    });
+
     app.get("/myIssues", async (req, res) => {
       const email = req.query.email;
       const query = {};
@@ -118,8 +163,8 @@ async function run() {
     });
 
     app.get("/sixResolvedIssue", async (req, res) => {
-      // const cursor = issues.find({ status: "resolved" }).sort({ resolvedDate: -1 }).limit(6);
-      const cursor = issues.find().sort({ resolvedDate: -1 }).limit(6);
+      const cursor = issues.find({ status: "Resolved" }).sort({ resolvedDate: -1 }).limit(6);
+      // const cursor = issues.find().sort({ resolvedDate: -1 }).limit(6);
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -213,7 +258,7 @@ async function run() {
             price_data: {
               currency: "BDT",
               unit_amount: amount,
-              product_data: {  
+              product_data: {
                 name: paymentInfo.name,
               },
             },
@@ -227,7 +272,7 @@ async function run() {
           userName: paymentInfo.name,
           type: paymentInfo.type,
           totalPayment: paymentInfo.totalPayment,
-          issueId: paymentInfo.issueId || NULL
+          issueId: paymentInfo.issueId,
         },
         success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-cancelled`,
@@ -259,7 +304,10 @@ async function run() {
 
       const trackingId = generateTrackingId();
 
-      if (session.payment_status === "paid" && session.metadata.type === 'Premium Subscription') {
+      if (
+        session.payment_status === "paid" &&
+        session.metadata.type === "Premium Subscription"
+      ) {
         const id = session.metadata.userId;
         const query = { _id: new ObjectId(id) };
         const update = {
@@ -298,14 +346,16 @@ async function run() {
             paymentInfo: resultPayment,
           });
         }
-      }
-      else if (session.payment_status === "paid" && session.metadata.type === 'Boost Issue') {
+      } else if (
+        session.payment_status === "paid" &&
+        session.metadata.type === "Boost Issue"
+      ) {
         const id = session.metadata.userId;
         const issueId = session.metadata.issueId;
         const query = { _id: new ObjectId(id) };
         const update = {
           $set: {
-            totalPayment: parseInt(session.metadata.totalPayment)
+            totalPayment: parseInt(session.metadata.totalPayment),
           },
         };
         const result = await citizens.updateOne(query, update);
@@ -313,11 +363,11 @@ async function run() {
         const query1 = { _id: new ObjectId(issueId) };
         const update1 = {
           $set: {
-            isBoosted: true
+            isBoosted: true,
+            priority: "High"
           },
         };
         const result1 = await issues.updateOne(query1, update1);
-
 
         const payment = {
           amount: session.amount_total / 100,
@@ -330,7 +380,7 @@ async function run() {
           paymentStatus: session.payment_status,
           paidAt: new Date(),
           trackingId: trackingId,
-          issueId: session.metadata.issueId
+          issueId: session.metadata.issueId,
         };
 
         if (session.payment_status === "paid") {
@@ -345,7 +395,7 @@ async function run() {
             trackingId: trackingId,
             transactionId: session.payment_intent,
             paymentInfo: resultPayment,
-            issueId: payment.issueId
+            issueId: payment.issueId,
           });
         }
       }
@@ -373,6 +423,26 @@ async function run() {
       res.send(result);
     });
 
+    // payment related apis
+    app.get("/allPayment", verifyFBToken, async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+
+      // console.log( 'headers', req.headers);
+
+      if (email) {
+        query.customerEmail = email;
+
+        // check email address
+        if (email !== req.decoded_email) {
+          return res.status(403).send({ message: "forbidden access" });
+        }
+      }
+      const cursor = payments.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
     app.delete("/myPaymentDelete/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -381,12 +451,13 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!",
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!",
+    // );
   } finally {
     // Ensures that the client will close when you error
+    // await client.close();
     // await client.close();
   }
 }
